@@ -21,7 +21,7 @@ def read_temp():
     except Exception:
         return None
 
-def measure_and_log(writer, duration_minutes, load):
+def measure_and_log(writer, duration_minutes, load, file_handle=None):
     """Measures temperature every 10s, logs average every minute."""
     total_seconds = duration_minutes * 60
     elapsed = 0
@@ -39,6 +39,8 @@ def measure_and_log(writer, duration_minutes, load):
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             avg_temp = round(mean(buffer), 2) if buffer else None
             writer.writerow([timestamp, load, avg_temp])
+            if file_handle:
+                file_handle.flush()  # <-- this flushes the data to disk
             print(f"{timestamp} | Load: {load}% | Avg Temp: {avg_temp}°C")
             buffer.clear()
 
@@ -56,17 +58,18 @@ def main():
     with open(csv_file, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["timestamp", "load", "cpu_temp"])
+        f.flush()  # flush header too
 
         for load in loads:
             print(f"\n[Idle] Waiting for {idle_time} min before load {load}%...")
-            measure_and_log(writer, idle_time, 0)
+            measure_and_log(writer, idle_time, 0, f)
 
             print(f"\n[Stress] Applying {load}% load for {stress_time} min...")
             proc = run_stress(load, stress_time)
-            measure_and_log(writer, stress_time, load)
+            measure_and_log(writer, stress_time, load, f)
             proc.wait()
 
-    print("\nBenchmark complete. Results saved to stats.csv")
+    print("\nBenchmark complete. Results saved to ", csv_file)
 
 if __name__ == "__main__":
     main()
