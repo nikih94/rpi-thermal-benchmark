@@ -74,7 +74,9 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
             if file_handle:
                 file_handle.flush()
             line = f"{timestamp} | Load: {load}% | " + " | ".join(
-                f"{label}: {row[i+2]}°C" for i, label in enumerate(labels))
+                f"{label}: {row[i+2]:.2f}°C" if row[i+2] is not None else f"{label}: N/A"
+                for i, label in enumerate(labels)
+            )
             sys.stdout.write("\r" + line)
             sys.stdout.flush()
             buffer = {label: [] for label in labels}
