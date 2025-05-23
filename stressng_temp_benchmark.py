@@ -96,11 +96,11 @@ def main():
         writer.writerow(header)
         f.flush()
 
-        total_phases = len(loads) * 2
-        total_minutes = total_phases * stress_time  # idle + stress per load
-        estimated_end = datetime.now() + timedelta(minutes=total_minutes)
+        stress_minutes = len(loads) * stress_time
+        idle_minutes = len(loads) * idle_time
+        estimated_end = datetime.now() + timedelta(minutes=(stress_minutes+idle_minutes))
         print(f"📊 Starting Raspberry Pi Thermal Benchmark")
-        print(f"🕒 Total Duration: ~{total_minutes} min")
+        print(f"🕒 Total Duration: ~{(stress_minutes+idle_minutes)} min")
         print(f"⏰ Estimated Completion: {estimated_end.strftime('%Y-%m-%d %H:%M:%S')}")
         print("-" * 60)
 
