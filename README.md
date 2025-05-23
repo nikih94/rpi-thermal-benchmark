@@ -85,6 +85,12 @@ sensor_paths = {
 python3 stressng_temp_benchmark.py
 ```
 
+Run detached:
+
+```bash
+nohup python3 stressng_temp_benchmark.py > output.log 2>&1 &
+```
+
 The script will:
 - Idle for `idle_time` minutes (logging temperature)
 - Apply each load from the `loads` array for `stress_time` minutes
