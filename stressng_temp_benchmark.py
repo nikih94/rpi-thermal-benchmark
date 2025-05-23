@@ -39,7 +39,8 @@ def read_all_temps():
 def measure_and_log(writer, duration_minutes, load, file_handle=None):
     total_seconds = duration_minutes * 60
     elapsed = 0
-    buffer = {label: [] for label in sensor_paths}
+    initial_labels = list(sensor_paths.keys()) + ["gpu_temp"]
+    buffer = {label: [] for label in initial_labels}
 
     while elapsed < total_seconds:
         temps = read_all_temps()
@@ -53,7 +54,7 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
         if elapsed % 60 == 0:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             row = [timestamp, load]
-            for label in sensor_paths:
+            for label in initial_labels:
                 values = buffer[label]
                 avg = round(mean(values), 2) if values else None
                 row.append(avg)
@@ -61,7 +62,7 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
             if file_handle:
                 file_handle.flush()
             print(f"{timestamp} | Load: {load}% | " + " | ".join(
-                f"{label}: {row[i+2]}°C" for i, label in enumerate(sensor_paths)))
+                f"{label}: {row[i+2]}°C" for i, label in enumerate(initial_labels)))
             buffer = {label: [] for label in sensor_paths}
 
 def run_stress(load, duration_minutes):
