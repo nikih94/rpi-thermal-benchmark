@@ -2,6 +2,8 @@ import csv
 import time
 import subprocess
 from statistics import mean
+from datetime import datetime, timedelta
+import sys
 
 # ====== CONFIGURATION ======
 stress_time = 20  # in minutes
@@ -71,9 +73,12 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
             writer.writerow(row)
             if file_handle:
                 file_handle.flush()
-            print(f"{timestamp} | Load: {load}% | " + " | ".join(
-                f"{label}: {row[i+2]}°C" for i, label in enumerate(labels)))
+            line = f"{timestamp} | Load: {load}% | " + " | ".join(
+                f"{label}: {row[i+2]}°C" for i, label in enumerate(labels))
+            sys.stdout.write("\r" + line)
+            sys.stdout.flush()
             buffer = {label: [] for label in labels}
+    print()
 
 def run_stress(load, duration_minutes):
     duration_secs = duration_minutes * 60
@@ -82,7 +87,7 @@ def run_stress(load, duration_minutes):
         "--cpu", str(cpu_workers),
         "--cpu-load", str(load),
         "-t", str(duration_secs)
-    ])
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def main():
     with open(csv_file, "w", newline="") as f:
@@ -90,6 +95,15 @@ def main():
         header = ["timestamp", "load"] + list(read_all_temps().keys())
         writer.writerow(header)
         f.flush()
+
+        total_phases = len(loads) * 2
+        total_minutes = total_phases * stress_time  # idle + stress per load
+        estimated_end = datetime.now() + timedelta(minutes=total_minutes)
+        print(f"📊 Starting Raspberry Pi Thermal Benchmark")
+        print(f"🕒 Total Duration: ~{total_minutes} min")
+        print(f"⏰ Estimated Completion: {estimated_end.strftime('%Y-%m-%d %H:%M:%S')}")
+        print("-" * 60)
+
 
         for load in loads:
             print(f"\n[Idle] Waiting for {idle_time} min before load {load}%...")
