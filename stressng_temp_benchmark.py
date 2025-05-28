@@ -5,7 +5,6 @@ from statistics import mean
 from datetime import datetime, timedelta
 import sys
 import glob
-import os
 
 # ====== CONFIGURATION ======
 stress_time = 20  # in minutes
@@ -27,21 +26,25 @@ def detect_fan_rpm_path():
 
 fan_rpm_path = detect_fan_rpm_path()
 
-def detect_nvme_temp_paths():
+def detect_nvme_temp_paths_via_find():
     nvme_paths = {}
-    temp_files = glob.glob("/sys/devices/platform/axi/*/nvme/nvme*/hwmon*/temp*_input")
-    for temp_file in temp_files:
-        try:
-            filename = os.path.basename(temp_file)
-            if filename.startswith("temp") and filename.endswith("_input"):
-                # temp1_input -> nvme_temp1
-                index = filename.replace("temp", "").replace("_input", "")
-                nvme_paths[f"nvme_temp{index}"] = temp_file
-        except Exception:
-            continue
+    try:
+        result = subprocess.run(
+            ["find", "/sys", "-type", "f", "-name", "temp*_input"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        for line in result.stdout.strip().splitlines():
+            if line.endswith("nvme/nvme0/hwmon1/temp1_input"):
+                nvme_paths["nvme_temp1"] = line
+            elif line.endswith("nvme/nvme0/hwmon1/temp2_input"):
+                nvme_paths["nvme_temp2"] = line
+    except Exception as e:
+        print("Failed to detect NVMe sensors:", e)
     return nvme_paths
 
-sensor_paths.update(detect_nvme_temp_paths())
+sensor_paths.update(detect_nvme_temp_paths_via_find())
 print(sensor_paths)
 
 def read_all_temps():
