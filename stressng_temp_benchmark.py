@@ -44,7 +44,6 @@ def detect_nvme_temp_paths_via_find():
     return nvme_paths
 
 sensor_paths.update(detect_nvme_temp_paths_via_find())
-print(sensor_paths)
 
 def read_all_temps():
     readings = {}
@@ -101,13 +100,21 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
             row = [timestamp, load]
             for label in labels:
                 values = buffer[label]
-                avg = round(mean(values), 2) if values else None
+                if values:
+                    if label == "fan_rpm":
+                        avg = int(round(mean(values)))  # integer RPM
+                    else:
+                        avg = round(mean(values), 2)   # temp with decimals
+                else:
+                    avg = None
                 row.append(avg)
             writer.writerow(row)
             if file_handle:
                 file_handle.flush()
             line = f"{timestamp} | Load: {load}% | " + " | ".join(
-                f"{label}: {row[i+2]:.2f}°C" if row[i+2] is not None else f"{label}: N/A"
+                f"{label}: {int(row[i+2])} rpm" if label == "fan_rpm" and row[i+2] is not None
+                else f"{label}: {row[i+2]:.2f}°C" if row[i+2] is not None
+                else f"{label}: N/A"
                 for i, label in enumerate(labels)
             )
             sys.stdout.write("\r" + line)
