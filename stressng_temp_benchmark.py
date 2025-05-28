@@ -41,6 +41,7 @@ def detect_nvme_temp_paths():
     return nvme_paths
 
 sensor_paths.update(detect_nvme_temp_paths())
+print(sensor_paths)
 
 def read_all_temps():
     readings = {}
