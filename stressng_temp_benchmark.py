@@ -4,6 +4,7 @@ import subprocess
 from statistics import mean
 from datetime import datetime, timedelta
 import sys
+import glob
 
 # ====== CONFIGURATION ======
 stress_time = 20  # in minutes
@@ -21,6 +22,12 @@ sensor_paths = {
     "adc_temp": "/sys/devices/platform/axi/1000120000.pcie/1f000c8000.adc/hwmon/hwmon2/temp1_input"
 }
 
+def detect_fan_rpm_path():
+    candidates = glob.glob("/sys/class/hwmon/hwmon*/fan1_input")
+    return candidates[0] if candidates else None
+
+fan_rpm_path = detect_fan_rpm_path()
+
 def read_all_temps():
     readings = {}
     for label, path in sensor_paths.items():
@@ -35,6 +42,14 @@ def read_all_temps():
         readings["gpu_temp"] = float(temp_str)
     except Exception:
         readings["gpu_temp"] = None
+
+    # Add fan RPM
+    if fan_rpm_path:
+        try:
+            with open(fan_rpm_path, "r") as f:
+                readings["fan_rpm"] = int(f.read().strip())
+        except Exception:
+            readings["fan_rpm"] = None
 
     return readings
 
