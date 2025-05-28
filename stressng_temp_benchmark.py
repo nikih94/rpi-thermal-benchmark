@@ -17,8 +17,6 @@ sample_interval = 10  # seconds between temperature samples
 
 sensor_paths = {
     "cpu_temp": "/sys/devices/virtual/thermal/thermal_zone0/hwmon0/temp1_input",
-    "nvme_temp1": "/sys/devices/platform/axi/1000110000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/nvme/nvme0/hwmon1/temp1_input",
-    "nvme_temp2": "/sys/devices/platform/axi/1000110000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/nvme/nvme0/hwmon1/temp2_input",
     "adc_temp": "/sys/devices/platform/axi/1000120000.pcie/1f000c8000.adc/hwmon/hwmon2/temp1_input"
 }
 
@@ -27,6 +25,22 @@ def detect_fan_rpm_path():
     return candidates[0] if candidates else None
 
 fan_rpm_path = detect_fan_rpm_path()
+
+def detect_nvme_temp_paths():
+    nvme_paths = {}
+    temp_files = glob.glob("/sys/devices/platform/axi/*/nvme/nvme*/hwmon*/temp*_input")
+    for temp_file in temp_files:
+        try:
+            filename = os.path.basename(temp_file)
+            if filename.startswith("temp") and filename.endswith("_input"):
+                # temp1_input -> nvme_temp1
+                index = filename.replace("temp", "").replace("_input", "")
+                nvme_paths[f"nvme_temp{index}"] = temp_file
+        except Exception:
+            continue
+    return nvme_paths
+
+sensor_paths.update(detect_nvme_temp_paths())
 
 def read_all_temps():
     readings = {}
