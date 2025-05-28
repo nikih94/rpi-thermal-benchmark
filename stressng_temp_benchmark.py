@@ -5,6 +5,7 @@ from statistics import mean
 from datetime import datetime, timedelta
 import sys
 import glob
+import os
 
 # ====== CONFIGURATION ======
 stress_time = 20  # in minutes
