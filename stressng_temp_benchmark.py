@@ -30,7 +30,7 @@ def detect_nvme_temp_paths_via_find():
     nvme_paths = {}
     try:
         result = subprocess.run(
-            ["find", "/sys", "-type", "f", "-name", "temp*_input"],
+            ["find", "/sys", "-readable", "-type", "f", "-name", "temp*_input"],
             capture_output=True,
             text=True,
             check=True
