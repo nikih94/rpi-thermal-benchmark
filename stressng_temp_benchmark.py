@@ -32,8 +32,7 @@ def detect_nvme_temp_paths_via_find():
         result = subprocess.run(
             ["find", "/sys", "-readable", "-type", "f", "-name", "temp*_input"],
             capture_output=True,
-            text=True,
-            check=True
+            text=True
         )
         for line in result.stdout.strip().splitlines():
             if line.endswith("nvme/nvme0/hwmon1/temp1_input"):
