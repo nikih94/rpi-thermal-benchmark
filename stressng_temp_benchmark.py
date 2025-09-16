@@ -13,6 +13,8 @@ loads = [20, 40, 60, 80, 100]  # load percentages to test
 csv_file = "stats.csv"
 cpu_workers = 4  # adjust based on number of cores
 sample_interval = 10  # seconds between temperature samples
+aggregate_interval = 60  # write to csv aggregates (default: 60s) can go down to sample_interval
+
 # ===========================
 
 sensor_paths = {
@@ -70,9 +72,16 @@ def read_all_temps():
 
     return readings
 
-def measure_and_log(writer, duration_minutes, load, file_handle=None):
+def measure_and_log(writer, duration_minutes, load, file_handle=None, aggregate_interval=60):
+
     total_seconds = duration_minutes * 60
     elapsed = 0
+
+    since_last_agg = 0
+    # Sanity: keep aggregate interval >= sampling interval
+    if aggregate_interval < sample_interval:
+        print(f"⚠️ aggregate_interval ({aggregate_interval}s) < sample_interval ({sample_interval}s). Using {sample_interval}s.")
+        aggregate_interval = sample_interval
 
     # First sample to detect all sensor labels
     first_read = read_all_temps()
@@ -94,8 +103,11 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
 
         time.sleep(sample_interval)
         elapsed += sample_interval
+        since_last_agg += sample_interval
 
-        if elapsed % 60 == 0:
+
+        # Flush every aggregate_interval, and once at the end (to not lose a partial window)
+        if since_last_agg >= aggregate_interval or elapsed >= total_seconds:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             row = [timestamp, load]
             for label in labels:
@@ -120,6 +132,7 @@ def measure_and_log(writer, duration_minutes, load, file_handle=None):
             sys.stdout.write("\r" + line)
             sys.stdout.flush()
             buffer = {label: [] for label in labels}
+            since_last_agg = 0
     print()
 
 def run_stress(load, duration_minutes):
@@ -149,11 +162,11 @@ def main():
 
         for load in loads:
             print(f"\n[Idle] Waiting for {idle_time} min before load {load}%...")
-            measure_and_log(writer, idle_time, 0, f)
+            measure_and_log(writer, idle_time, 0, f, aggregate_interval=aggregate_interval)
 
             print(f"\n[Stress] Applying {load}% load for {stress_time} min...")
             proc = run_stress(load, stress_time)
-            measure_and_log(writer, stress_time, load, f)
+            measure_and_log(writer, stress_time, load, f, aggregate_interval=aggregate_interval)
             proc.wait()
 
     print("\nBenchmark complete. Results saved to", csv_file)
