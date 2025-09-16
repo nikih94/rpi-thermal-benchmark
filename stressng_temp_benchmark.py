@@ -13,7 +13,7 @@ loads = [20, 40, 60, 80, 100]  # load percentages to test
 csv_file = "stats.csv"
 cpu_workers = 4  # adjust based on number of cores
 sample_interval = 10  # seconds between temperature samples
-aggregate_interval = 60  # write to csv aggregates (default: 60s) can go down to sample_interval
+aggregate_interval = 60  # write to csv aggregates of taken measurements (default: 60s) can go down to sample_interval
 
 # ===========================
 

@@ -21,7 +21,7 @@ By default, the following sensors are monitored:
 - Applies increasing CPU loads (e.g., 20%, 40%, ..., 100%) using `stress-ng`
 - Each load phase is preceded by an idle (cool down) period
 - Records temperature every 10 seconds
-- Logs the **average temperature per minute** to a CSV file (`stats.csv`)
+- Logs the average temperature per aggregation interval to a CSV file (`stats.csv`)
 - Designed to test **thermal performance and cooling** of Raspberry Pi devices
 
 ---
@@ -57,6 +57,7 @@ idle_time = 20        # minutes in idle before each load phase
 loads = [20, 40, 60, 80, 100]  # CPU load percentages
 cpu_workers = 4       # Number of CPU stress workers (usually number of cores)
 sample_interval = 10  # Temperature sampling interval (in seconds)
+aggregate_interval = 60 # write to csv aggregates of taken measurements (default: 60s) can go down to sample_interval
 ```
 
 Adjust `cpu_workers` based on your Pi model (e.g., 4 for Raspberry Pi 4).
